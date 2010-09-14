@@ -9,6 +9,8 @@ require 'rake/clean'
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
 require 'rake/testtask'
+require 'lib/data_set_loader'
+require 'lib/key_value_parser'
 
 spec = Gem::Specification.new do |s|
   s.name = 'IpLocationService'
@@ -42,4 +44,22 @@ end
 
 Rake::TestTask.new do |t|
   t.test_files = FileList['test/**/*.rb']
+end
+
+desc "Loads dataset in provided csv File to Redis"
+task :load_dataset do
+	filename = ENV['file']
+	file = File.new(filename, 'r')
+
+	database = Redis.new
+	parser = KeyValueParser.new
+
+	data_set_loader = DataSetLoader.new(database, parser)
+	data_set_loader.upload file.read
+end
+
+desc "Removes all entries from Redis"
+task :flush_redis do
+	database = Redis.new
+	database.flushall
 end
